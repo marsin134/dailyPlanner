@@ -59,7 +59,7 @@ func LoadDB() DB {
 		DbHost:    getEnv("DB_HOST", "localhost"),
 		DbPort:    getEnv("DB_PORT", "5432"),
 		DbUser:    getEnv("DB_USER", "postgres"),
-		DbPass:    getEnv("BD_PASSWORD", "123"),
+		DbPass:    getEnv("DB_PASSWORD", "123"),
 		DbName:    getEnv("DB_NAME", "dailyPlanner"),
 		DbSSLMode: getEnv("DB_SSL_MODE", "disable"),
 	}
