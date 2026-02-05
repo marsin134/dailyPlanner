@@ -86,7 +86,7 @@ func (db *DB) GetDB() *DB {
 
 // psql -U postgres -h localhost
 // CREATE DATABASE dailyPlanner;
-// psql -h localhost -U postgres -d dailyPlanner -c "\dt"
-// psql -h localhost -U postgres -d dailyPlanner -f migrations/001_create_tables.sql
+// psql -h localhost -U postgres -d dailyplanner -c "\dt"
+// psql -h localhost -U postgres -d dailyplanner -f migrations/001_create_tables.sql
 // DROP DATABASE IF EXISTS dailyPlanner;
 // CREATE DATABASE dailyPlanner;
