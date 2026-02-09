@@ -28,8 +28,63 @@ func main() {
 
 	ctx := context.Context(context.Background())
 
+	//checkUser(db, ctx)
+	checkEvents(db, ctx)
+
+}
+
+func checkEvents(db *database.DB, ctx context.Context) {
+	r := repository.NewUserRepository(db)
+	user, _ := r.GetUserById(ctx, "de891e94-f386-43fd-8698-d0721efb3af3")
+	event := models.Event{
+		TitleEvent: "помыть посуду",
+		DateEvent:  "2026-02-09",
+	}
+
+	vr := repository.NewEventRepository(db)
+
+	err := vr.CreateEvent(ctx, user.UserId, &event)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Create event")
+
+	firstEvent, err := vr.GetEventsByUserIdAndDate(ctx, user.UserId, event.DateEvent)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(firstEvent[0])
+	fmt.Println("Good get event by user.id and date")
+	fmt.Println(firstEvent[0].TitleEvent)
+
+	secondEvent, err := vr.GetEventById(ctx, firstEvent[0].EventId)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(secondEvent)
+	fmt.Println("Good get event by user.id and date")
+
+	err = vr.UpdateEvent(ctx, secondEvent.EventId, "помыть посуды и убрать со стола", "green")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Good update event")
+
+	err = vr.CompleteEvent(ctx, secondEvent.EventId)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Good complete event")
+
+	err = vr.DeleteEvent(ctx, secondEvent.EventId)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Good delete event")
+}
+
+func checkUser(db *database.DB, ctx context.Context) {
 	user := models.User{
-		UserId:   "1",
 		UserName: "Oleg",
 		Email:    "oleg@gmail.com",
 		Role:     "User",

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"dailyPlanner/internal/models"
+	"time"
 )
 
 type UserRepository interface {
@@ -14,4 +15,13 @@ type UserRepository interface {
 	UpdatePassword(ctx context.Context, email, password, newPassword string) error
 	AppointmentModerator(ctx context.Context, email, role, password string) error
 	DeleteUser(ctx context.Context, userId string) error
+}
+
+type EventRepository interface {
+	CreateEvent(ctx context.Context, userId string, event *models.Event) error
+	GetEventById(ctx context.Context, eventId string) (*models.Event, error)
+	GetEventsByUserIdAndDate(ctx context.Context, userId string, date time.Time) ([]*models.Event, error)
+	UpdateEvent(ctx context.Context, eventId, newTitle, color string) error
+	CompleteEvent(ctx context.Context, eventId string) error
+	DeleteEvent(ctx context.Context, eventId string) error
 }

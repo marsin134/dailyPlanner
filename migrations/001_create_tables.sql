@@ -19,11 +19,11 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
 
-CREATE TABLE IF NOT EXISTS event (
+CREATE TABLE IF NOT EXISTS events (
     event_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     title_event VARCHAR(500) NOT NULL,
-    date_event TIMESTAMP WITH TIME ZONE NOT NULL,
+    date_event DATE NOT NULL,
     completed BOOLEAN DEFAULT FALSE,
     color VARCHAR(20) NOT NULL CHECK (color IN ('red', 'green', 'blue'))
 );
@@ -32,6 +32,6 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON user_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token_hash ON user_sessions(refresh_token_hash);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON user_sessions(expires_at) WHERE is_active = TRUE;
-CREATE INDEX IF NOT EXISTS idx_event_user_id ON event(user_id);
-CREATE INDEX IF NOT EXISTS idx_event_date_event ON event(date_event DESC);
-CREATE INDEX IF NOT EXISTS idx_event_completed ON event(completed) WHERE completed = FALSE;
+CREATE INDEX IF NOT EXISTS idx_events_user_id ON events(user_id);
+CREATE INDEX IF NOT EXISTS idx_events_date_event ON events(date_event DESC);
+CREATE INDEX IF NOT EXISTS idx_events_completed ON events(completed) WHERE completed = FALSE;

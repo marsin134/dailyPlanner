@@ -21,10 +21,10 @@ type UserSessions struct {
 }
 
 type Event struct {
-	EventId    string    `json:"event_id" db:"event_id"`
-	UserId     string    `json:"user_id" db:"user_id"`
-	TitleEvent string    `json:"title_event" db:"title_event"`
-	DateEvent  time.Time `json:"date_event" db:"date_event"`
-	Completed  bool      `json:"completed" db:"completed"`
-	Color      string    `json:"color" db:"color"`
+	EventId    string `json:"event_id" db:"event_id"`
+	UserId     string `json:"user_id" db:"user_id"`
+	TitleEvent string `json:"title_event" db:"title_event"`
+	DateEvent  string `json:"date_event" db:"date_event"`
+	Completed  bool   `json:"completed" db:"completed"`
+	Color      string `json:"color" db:"color"`
 }
