@@ -25,3 +25,13 @@ type EventRepository interface {
 	CompleteEvent(ctx context.Context, eventId string) error
 	DeleteEvent(ctx context.Context, eventId string) error
 }
+
+type UserSessionsRepository interface {
+	CreateUserSessions(ctx context.Context, session models.UserSessions, refreshToken string) error
+	GetSessionById(ctx context.Context, sessionId string) (*models.UserSessions, error)
+	GetSessionsByUser(ctx context.Context, userId string) ([]*models.UserSessions, error)
+	UpdateSessionsToken(ctx context.Context, sessionId, newRefreshToken string, expiresAt time.Time)
+	Deactivate(ctx context.Context, sessionId string) error
+	DeactivateAllExcept(ctx context.Context, userID, currentSessionId string) error
+	DeleteExpired(ctx context.Context) error
+}

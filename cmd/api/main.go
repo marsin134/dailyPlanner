@@ -9,6 +9,7 @@ import (
 	"dailyPlanner/internal/repository"
 	"fmt"
 	"log"
+	"time"
 )
 
 func main() {
@@ -29,8 +30,83 @@ func main() {
 	ctx := context.Context(context.Background())
 
 	//checkUser(db, ctx)
-	checkEvents(db, ctx)
+	//checkEvents(db, ctx)
+	checkUserSessions(db, ctx)
+}
 
+func checkUserSessions(db *database.DB, ctx context.Context) {
+	s := repository.NewUserSessionsRepository(db)
+
+	date := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	//userSession := models.UserSessions{UserId: "8c522305-7aaf-434c-9a5c-58c1166a58be",
+	//	ExpiresAt: date,
+	//	IpAddress: ""}
+	//
+	//err := s.CreateUserSessions(ctx, userSession, "hello")
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//println("Good Create")
+	//
+	//err = s.CreateUserSessions(ctx, userSession, "helloSecond")
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//println("Good Create Second")
+
+	session, err := s.GetSessionById(ctx, "905d5df7-4f8b-4fe6-8d36-a013989aa9a3")
+	if err != nil {
+		log.Fatal(err)
+	}
+	println("Good GetSessionByTokenHash")
+
+	secondSessions, err := s.GetSessionsByUser(ctx, "8c522305-7aaf-434c-9a5c-58c1166a58be")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	println("Test sessions")
+	for _, secondSession := range secondSessions {
+		println(secondSession.UserId)
+	}
+
+	println("Good GetSessionsByUser")
+
+	err = s.UpdateSessionsToken(ctx, "f0adc2ed-f7c7-4620-8006-2c63018c480e", "helloSecond2", date)
+	if err != nil {
+		log.Fatal(err)
+	}
+	println("Good UpdateSessionsToken")
+
+	err = s.DeactivateAllExcept(ctx, "8c522305-7aaf-434c-9a5c-58c1166a58be", "905d5df7-4f8b-4fe6-8d36-a013989aa9a3")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	secondSessions, err = s.GetSessionsByUser(ctx, "8c522305-7aaf-434c-9a5c-58c1166a58be")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	println("Test sessions")
+	for _, secondSession := range secondSessions {
+		println(secondSession.IsActive)
+	}
+	println("Good DeactivateAllExcept")
+
+	err = s.Deactivate(ctx, "905d5df7-4f8b-4fe6-8d36-a013989aa9a3")
+	if err != nil {
+		log.Fatal(err)
+	}
+	session, _ = s.GetSessionById(ctx, "905d5df7-4f8b-4fe6-8d36-a013989aa9a3")
+	println(session.IsActive)
+	println("Good Deactivate")
+
+	err = s.DeleteExpired(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	println("Good DeleteExpired")
 }
 
 func checkEvents(db *database.DB, ctx context.Context) {
