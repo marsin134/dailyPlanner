@@ -3,11 +3,11 @@ package models
 import "time"
 
 type User struct {
-	UserId   string `json:"user_id" db:"user_id"`
-	UserName string `json:"username" db:"username"`
-	Email    string `json:"email" db:"email"`
-	Password string `json:"password" db:"password_hash"`
-	Role     string `json:"role" db:"role"`
+	UserId       string `json:"user_id" db:"user_id"`
+	UserName     string `json:"user_name" db:"user_name"`
+	Email        string `json:"email" db:"email"`
+	PasswordHash string `json:"password" db:"password_hash"`
+	Role         string `json:"role" db:"role"`
 }
 
 type UserSessions struct {
@@ -21,10 +21,10 @@ type UserSessions struct {
 }
 
 type Event struct {
-	EventId    string    `json:"event_id" db:"event_id"`
-	UserId     string    `json:"user_id" db:"user_id"`
-	TitleEvent string    `json:"title_event" db:"title_event"`
-	DateEvent  time.Time `json:"date_event" db:"date_event"`
-	Completed  bool      `json:"completed" db:"completed"`
-	Color      string    `json:"color" db:"color"`
+	EventId    string `json:"event_id" db:"event_id"`
+	UserId     string `json:"user_id" db:"user_id"`
+	TitleEvent string `json:"title_event" db:"title_event"`
+	DateEvent  string `json:"date_event" db:"date_event"`
+	Completed  bool   `json:"completed" db:"completed"`
+	Color      string `json:"color" db:"color"`
 }

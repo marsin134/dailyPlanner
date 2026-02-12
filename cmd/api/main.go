@@ -1,7 +1,6 @@
 package main
 
 import (
-	"dailyPlanner/cmd/app"
 	"dailyPlanner/internal/config"
 	"fmt"
 	"log"
@@ -19,8 +18,6 @@ func main() {
 	if cfg.Token.JWTSecret == "" {
 		log.Fatal("JWT_SECRET_KEY не установлен в .env файле")
 	}
-
-	app.App(&cfg)
 
 	// Starting the server
 	addr := fmt.Sprintf(":%d", cfg.ServerPort)
