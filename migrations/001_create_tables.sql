@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     refresh_token_hash TEXT NOT NULL UNIQUE,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    user_agent TEXT,
     ip_address VARCHAR(45),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

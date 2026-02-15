@@ -15,6 +15,7 @@ type UserSessions struct {
 	UserId           string    `json:"user_id" db:"user_id"`
 	RefreshTokenHash string    `json:"refresh_token_hash" db:"refresh_token_hash"`
 	ExpiresAt        time.Time `json:"expires_at" db:"expires_at"`
+	UserAgent        string    `json:"user_agent" db:"user_agent"`
 	IpAddress        string    `json:"ip_address" db:"ip_address"`
 	IsActive         bool      `json:"is_active" db:"is_active"`
 	CreatedAt        time.Time `json:"created_at" db:"created_at"`
