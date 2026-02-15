@@ -27,11 +27,25 @@ type EventRepository interface {
 }
 
 type UserSessionsRepository interface {
-	CreateUserSessions(ctx context.Context, session models.UserSessions, refreshToken string) error
+	CreateUserSessions(ctx context.Context, session models.UserSessions, refreshToken string) (string, error)
 	GetSessionById(ctx context.Context, sessionId string) (*models.UserSessions, error)
 	GetSessionsByUser(ctx context.Context, userId string) ([]*models.UserSessions, error)
-	UpdateSessionsToken(ctx context.Context, sessionId, newRefreshToken string, expiresAt time.Time)
+	UpdateSessionsToken(ctx context.Context, sessionId, newRefreshToken string, expiresAt time.Time) error
 	Deactivate(ctx context.Context, sessionId string) error
 	DeactivateAllExcept(ctx context.Context, userID, currentSessionId string) error
 	DeleteExpired(ctx context.Context) error
+}
+
+type Repository struct {
+	User         userRepository
+	Event        EventRepository
+	UserSessions UserSessionsRepository
+}
+
+func NewRepository(user userRepository, event EventRepository, userSessions UserSessionsRepository) *Repository {
+	return &Repository{
+		User:         user,
+		Event:        event,
+		UserSessions: userSessions,
+	}
 }
