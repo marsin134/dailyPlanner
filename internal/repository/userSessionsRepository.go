@@ -18,10 +18,10 @@ func NewUserSessionsRepository(db *database.DB) *userSessionsRepository {
 	return &userSessionsRepository{db: db}
 }
 
-func (s userSessionsRepository) CreateUserSessions(ctx context.Context, session models.UserSessions, refreshToken string) error {
+func (s userSessionsRepository) CreateUserSessions(ctx context.Context, session models.UserSessions, refreshToken string) (string, error) {
 	refreshTokenHash, err := bcrypt.GenerateFromPassword([]byte(refreshToken), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("CreateUserSessions: Error generating bcrypt hash for refresh token: %w", err)
+		return "", fmt.Errorf("CreateUserSessions: Error generating bcrypt hash for refresh token: %w", err)
 	}
 
 	session.SessionId = uuid.New().String()
@@ -30,15 +30,15 @@ func (s userSessionsRepository) CreateUserSessions(ctx context.Context, session 
 	session.CreatedAt = time.Now()
 
 	query := `INSERT
-		INTO user_sessions (session_id, user_id, refresh_token_hash, expires_at, ip_address, is_active, created_at)
-		VALUES (:session_id, :user_id, :refresh_token_hash, :expires_at, :ip_address, :is_active, :created_at)`
+		INTO user_sessions (session_id, user_id, refresh_token_hash, expires_at, user_agent, ip_address, is_active, created_at)
+		VALUES (:session_id, :user_id, :refresh_token_hash, :expires_at, :user_agent, :ip_address, :is_active, :created_at)`
 
 	_, err = s.db.NamedExecContext(ctx, query, session)
 	if err != nil {
-		return fmt.Errorf("CreateUserSessions: %w", err)
+		return "", fmt.Errorf("CreateUserSessions: %w", err)
 	}
 
-	return nil
+	return session.SessionId, nil
 }
 
 func (s userSessionsRepository) GetSessionById(ctx context.Context, sessionId string) (*models.UserSessions, error) {
