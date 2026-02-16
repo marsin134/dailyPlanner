@@ -77,7 +77,7 @@ func (s userSessionsRepository) UpdateSessionsToken(ctx context.Context, session
 	session.ExpiresAt = expiresAt
 
 	query := `UPDATE user_sessions 
-	SET refresh_token_hash = :refresh_token_hash, expires_at = :expires_at 
+	SET refresh_token_hash = :refresh_token_hash, expires_at = :expires_at, is_active = true 
                      WHERE session_id = :session_id`
 
 	result, err := s.db.NamedExecContext(ctx, query, session)
