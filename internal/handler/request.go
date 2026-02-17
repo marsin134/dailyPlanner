@@ -12,5 +12,15 @@ type LoginRequest struct {
 }
 
 type RefreshTokenRequest struct {
-	SessionId string `json:"refresh_token"`
+	SessionId    string `json:"session_id"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+type LogoutRequest struct {
+	SessionId string `json:"session_id"`
+}
+
+type LogoutAllExcept struct {
+	ActiveSessionId string `json:"active_session_id"`
+	UserId          string `json:"user_id"`
 }

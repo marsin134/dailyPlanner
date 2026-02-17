@@ -4,6 +4,7 @@ import (
 	"dailyPlanner/internal/service"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"net"
 	"net/http"
 	"regexp"
@@ -221,13 +222,25 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	session, err := h.Repo.UserSessions.GetSessionById(r.Context(), req.SessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(session.RefreshTokenHash), []byte(req.RefreshToken))
+	if err != nil {
+		WriteErrorResponse(w, "Refresh token doesn't match", http.StatusUnauthorized)
+		return
+	}
+
 	user, accessToken, RefreshToken, err := h.Service.AuthService.RefreshToken(r.Context(), req.SessionId)
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	session, err := h.Repo.UserSessions.GetSessionById(r.Context(), req.SessionId)
+	session, err = h.Repo.UserSessions.GetSessionById(r.Context(), req.SessionId)
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -252,4 +265,66 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if h.CheckHandlerStruct(w) != nil {
+		return
+	}
+
+	var req LogoutRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteErrorResponse(w, "Invalid request format", http.StatusBadRequest)
+		return
+	}
+	if err := h.Validate.Struct(req); err != nil {
+		WriteErrorResponse(w, "Incorrect data", http.StatusBadRequest)
+		return
+	}
+
+	err := h.Repo.UserSessions.Deactivate(r.Context(), req.SessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("{Successful exit from the device}")
+}
+
+func (h *Handler) LogoutAllExceptHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if h.CheckHandlerStruct(w) != nil {
+		return
+	}
+
+	var req LogoutAllExcept
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteErrorResponse(w, "Invalid request format", http.StatusBadRequest)
+		return
+	}
+	if err := h.Validate.Struct(req); err != nil {
+		WriteErrorResponse(w, "Incorrect data", http.StatusBadRequest)
+		return
+	}
+
+	err := h.Repo.UserSessions.DeactivateAllExcept(r.Context(), req.UserId, req.ActiveSessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("{Successful exit from the devices}")
 }
