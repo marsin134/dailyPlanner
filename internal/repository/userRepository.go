@@ -80,11 +80,8 @@ func (r userRepository) VerifyPassword(ctx context.Context, email string, passwo
 	return user, nil
 }
 
-func (r userRepository) UpdateUsername(ctx context.Context, email, newUserName, password string) error {
-	user, err := r.VerifyPassword(ctx, email, password)
-	if err != nil {
-		return fmt.Errorf("error receiving the user when updating the user_name: %w", err)
-	}
+func (r userRepository) UpdateUsername(ctx context.Context, email, newUserName string) error {
+	user, err := r.GetUserByEmail(ctx, email)
 
 	user.UserName = newUserName
 
@@ -133,8 +130,8 @@ func (r userRepository) UpdatePassword(ctx context.Context, email, password, new
 	return nil
 }
 
-func (r userRepository) AppointmentModerator(ctx context.Context, email, role, password string) error {
-	user, err := r.VerifyPassword(ctx, email, password)
+func (r userRepository) AppointmentModerator(ctx context.Context, email, role string) error {
+	user, err := r.GetUserByEmail(ctx, email)
 	if err != nil {
 		return fmt.Errorf("error receiving the user when appointment moderator: %w", err)
 	}

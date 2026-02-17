@@ -3,7 +3,6 @@ package handler
 import (
 	"dailyPlanner/internal/service"
 	"encoding/json"
-	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"net"
 	"net/http"
@@ -41,20 +40,6 @@ func getUserAgent(r *http.Request) string {
 		return "unknown"
 	}
 	return userAgent
-}
-
-func (h *Handler) CheckHandlerStruct(w http.ResponseWriter) error {
-	if h == nil {
-		WriteErrorResponse(w, "Handler is nil", http.StatusNotImplemented)
-		return fmt.Errorf("Handler is nil. ")
-	}
-
-	if h.Validate == nil {
-		WriteErrorResponse(w, "Validate is nil", http.StatusNotImplemented)
-		return fmt.Errorf("Validate is nil. ")
-	}
-
-	return nil
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -268,7 +253,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodGet {
 		WriteErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -277,25 +262,20 @@ func (h *Handler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req LogoutRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		WriteErrorResponse(w, "Invalid request format", http.StatusBadRequest)
-		return
-	}
-	if err := h.Validate.Struct(req); err != nil {
-		WriteErrorResponse(w, "Incorrect data", http.StatusBadRequest)
+	sessionId, ok := r.Context().Value("sessionId").(string)
+	if !ok {
+		WriteErrorResponse(w, "Authorization is required", http.StatusBadRequest)
 		return
 	}
 
-	err := h.Repo.UserSessions.Deactivate(r.Context(), req.SessionId)
+	err := h.Repo.UserSessions.Deactivate(r.Context(), sessionId)
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode("{Successful exit from the device}")
+	json.NewEncoder(w).Encode(MessageResponse{Message: "Successful exit from the device"})
 }
 
 func (h *Handler) LogoutAllExceptHandler(w http.ResponseWriter, r *http.Request) {
@@ -308,23 +288,23 @@ func (h *Handler) LogoutAllExceptHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var req LogoutAllExcept
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		WriteErrorResponse(w, "Invalid request format", http.StatusBadRequest)
+	sessionId, ok := r.Context().Value("sessionId").(string)
+	if !ok {
+		WriteErrorResponse(w, "Authorization is required", http.StatusBadRequest)
 		return
 	}
-	if err := h.Validate.Struct(req); err != nil {
-		WriteErrorResponse(w, "Incorrect data", http.StatusBadRequest)
+	userId, ok := r.Context().Value("userId").(string)
+	if !ok {
+		WriteErrorResponse(w, "Authorization is required", http.StatusBadRequest)
 		return
 	}
 
-	err := h.Repo.UserSessions.DeactivateAllExcept(r.Context(), req.UserId, req.ActiveSessionId)
+	err := h.Repo.UserSessions.DeactivateAllExcept(r.Context(), userId, sessionId)
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode("{Successful exit from the devices}")
+	json.NewEncoder(w).Encode(MessageResponse{Message: "Successful exit from the devices"})
 }
