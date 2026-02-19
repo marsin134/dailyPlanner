@@ -21,23 +21,19 @@ func NewAuthService(userRepo repository.UserRepository, sessionsRepo repository.
 	return &authService{userRepo: userRepo, sessionsRepo: sessionsRepo, cfg: cfg}
 }
 
-type createUserRequest struct {
+type CreateUserRequest struct {
 	UserName string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type loginUserRequest struct {
+type LoginUserRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-func (svc *authService) generateAccessToken(user *models.User, session *models.UserSessions) (string, error) {
+func (svc *authService) generateAccessToken(session *models.UserSessions) (string, error) {
 	claims := jwt.MapClaims{
-		"user_name":  user.UserName,
-		"user_id":    user.UserId,
-		"email":      user.Email,
-		"role":       user.Role,
 		"session_id": session.SessionId,
 		"exp":        time.Now().Add(svc.cfg.Token.AccessTokenDuration).Unix(),
 		"iat":        time.Now().Unix(),
@@ -70,7 +66,7 @@ func (svc *authService) CheckUserAgentAndIp(sessions []*models.UserSessions, use
 	return nil
 }
 
-func (svc *authService) Register(ctx context.Context, req createUserRequest, ipAddress string) (*models.User, error) {
+func (svc *authService) Register(ctx context.Context, req CreateUserRequest) (*models.User, error) {
 	// get user by email
 	existingUser, err := svc.userRepo.GetUserByEmail(ctx, req.Email)
 	if err == nil && existingUser != nil {
@@ -95,11 +91,11 @@ func (svc *authService) Register(ctx context.Context, req createUserRequest, ipA
 	return user, nil
 }
 
-func (svc *authService) CreateUserSessionsService(ctx context.Context, user *models.User, ipAddress, userAgent string) (*models.UserSessions, error) {
+func (svc *authService) CreateUserSessionsService(ctx context.Context, user *models.User, ipAddress, userAgent string) (string, *models.UserSessions, error) {
 	// creating a refresh token
 	refreshToken, expiresAt, err := svc.generateRefreshToken()
 	if err != nil {
-		return nil, fmt.Errorf("error when creating a user: %w", err)
+		return "", nil, fmt.Errorf("error when creating a user: %w", err)
 	}
 
 	sessionUser := models.UserSessions{
@@ -110,60 +106,66 @@ func (svc *authService) CreateUserSessionsService(ctx context.Context, user *mod
 
 	sessionId, err := svc.sessionsRepo.CreateUserSessions(ctx, sessionUser, refreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("error when creating a user: %w", err)
+		return "", nil, fmt.Errorf("error when creating a user: %w", err)
 	}
 
 	sessionAgent, err := svc.sessionsRepo.GetSessionById(ctx, sessionId)
 	if err != nil {
-		return nil, fmt.Errorf("error when creating a user: %w", err)
+		return "", nil, fmt.Errorf("error when creating a user: %w", err)
 	}
 
-	return sessionAgent, nil
+	return refreshToken, sessionAgent, nil
 }
 
-func (svc *authService) Login(ctx context.Context, req loginUserRequest, userAgent, ipAddress string) (*models.User, string, *models.UserSessions, error) {
+func (svc *authService) Login(ctx context.Context, req LoginUserRequest, userAgent, ipAddress string) (*models.User, string, string, *models.UserSessions, error) {
 	// checking for password compliance
 	user, err := svc.userRepo.VerifyPassword(ctx, req.Email, req.Password)
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("error when logging in: %w", err)
+		return nil, "", "", nil, fmt.Errorf("error when logging in: %w", err)
 	}
+
+	refreshToken := ""
 
 	// getting all user sessions
 	sessions, err := svc.sessionsRepo.GetSessionsByUser(ctx, user.UserId)
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("error when logging in: %w", err)
+		return nil, "", "", nil, fmt.Errorf("error when logging in: %w", err)
 	}
 
 	if len(sessions) == 0 {
-		session, err := svc.CreateUserSessionsService(ctx, user, ipAddress, userAgent)
+		refreshToken, session, err := svc.CreateUserSessionsService(ctx, user, ipAddress, userAgent)
 		if err != nil {
-			return nil, "", nil, fmt.Errorf("error when logging in: %w", err)
+			return nil, "", "", nil, fmt.Errorf("error when logging in: %w", err)
 		}
-		return user, "", session, nil
+		accessToken, err := svc.generateAccessToken(session)
+		if err != nil {
+			return nil, "", "", nil, fmt.Errorf("error when logging in: %w", err)
+		}
+		return user, accessToken, refreshToken, session, nil
 	}
 
 	session := svc.CheckUserAgentAndIp(sessions, userAgent, ipAddress)
 	if session == nil {
-		session, err = svc.CreateUserSessionsService(ctx, user, ipAddress, userAgent)
+		refreshToken, session, err = svc.CreateUserSessionsService(ctx, user, ipAddress, userAgent)
 	} else {
 		// updating a refresh token
 		refreshToken, expiresAt, err := svc.generateRefreshToken()
 		if err != nil {
-			return nil, "", nil, fmt.Errorf("error when logging in: %w", err)
+			return nil, "", "", nil, fmt.Errorf("error when logging in: %w", err)
 		}
 		err = svc.sessionsRepo.UpdateSessionsToken(ctx, session.SessionId, refreshToken, expiresAt)
 	}
 
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("error when logging in: %w", err)
+		return nil, "", "", nil, fmt.Errorf("error when logging in: %w", err)
 	}
 
-	accessToken, err := svc.generateAccessToken(user, session)
+	accessToken, err := svc.generateAccessToken(session)
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("error when logging in: %w", err)
+		return nil, "", "", nil, fmt.Errorf("error when logging in: %w", err)
 	}
 
-	return user, accessToken, session, nil
+	return user, accessToken, refreshToken, session, nil
 }
 
 func (svc *authService) ValidateToken(accessToken string) (*jwt.Token, error) {
@@ -184,26 +186,49 @@ func (svc *authService) ValidateToken(accessToken string) (*jwt.Token, error) {
 	return token, nil
 }
 
-func (svc *authService) GetUserAndSessionFromToken(accessToken string) (*models.User, *models.UserSessions, error) {
+func (svc *authService) GetSessionFromToken(accessToken string) (*models.UserSessions, error) {
 	token, err := svc.ValidateToken(accessToken)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error when validating token: %w", err)
+		return nil, fmt.Errorf("error when validating token: %w", err)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, nil, fmt.Errorf("error when validating token")
-	}
-
-	user := &models.User{
-		UserName: claims["user_name"].(string),
-		Email:    claims["email"].(string),
+		return nil, fmt.Errorf("error when validating token")
 	}
 
 	session := &models.UserSessions{
 		SessionId: claims["session_id"].(string),
-		UserId:    claims["user_id"].(string),
 	}
 
-	return user, session, nil
+	return session, nil
+}
+
+func (svc *authService) RefreshToken(ctx context.Context, sessionId string) (*models.User, string, string, error) {
+	session, err := svc.sessionsRepo.GetSessionById(ctx, sessionId)
+	if err != nil {
+		return nil, "", "", fmt.Errorf("error when refreshing token: %w", err)
+	}
+
+	user, err := svc.userRepo.GetUserById(ctx, session.UserId)
+	if err != nil {
+		return nil, "", "", fmt.Errorf("error when refreshing token: %w", err)
+	}
+
+	accessToken, err := svc.generateAccessToken(session)
+	if err != nil {
+		return nil, "", "", fmt.Errorf("error when refreshing token: %w", err)
+	}
+
+	newRefreshToken, ExpiryAt, err := svc.generateRefreshToken()
+	if err != nil {
+		return nil, "", "", fmt.Errorf("error when refreshing token: %w", err)
+	}
+
+	err = svc.sessionsRepo.UpdateSessionsToken(ctx, session.SessionId, newRefreshToken, ExpiryAt)
+	if err != nil {
+		return nil, "", "", fmt.Errorf("error when refreshing token: %w", err)
+	}
+
+	return user, accessToken, newRefreshToken, nil
 }

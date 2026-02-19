@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"dailyPlanner/internal/database"
 	"dailyPlanner/internal/models"
 	"time"
 )
@@ -11,16 +12,16 @@ type UserRepository interface {
 	GetUserById(ctx context.Context, userId string) (*models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 	VerifyPassword(ctx context.Context, email string, password string) (*models.User, error)
-	UpdateUsername(ctx context.Context, email, newUserName, password string) error
+	UpdateUsername(ctx context.Context, email, newUserName string) error
 	UpdatePassword(ctx context.Context, email, password, newPassword string) error
-	AppointmentModerator(ctx context.Context, email, role, password string) error
+	AppointmentModerator(ctx context.Context, userId, role string) error
 	DeleteUser(ctx context.Context, userId string) error
 }
 
 type EventRepository interface {
-	CreateEvent(ctx context.Context, userId string, event *models.Event) error
+	CreateEvent(ctx context.Context, userId string, event *models.Event) (*models.Event, error)
 	GetEventById(ctx context.Context, eventId string) (*models.Event, error)
-	GetEventsByUserIdAndDate(ctx context.Context, userId string, date time.Time) ([]*models.Event, error)
+	GetEventsByUserIdAndDate(ctx context.Context, userId, date string) ([]models.Event, error)
 	UpdateEvent(ctx context.Context, eventId, newTitle, color string) error
 	CompleteEvent(ctx context.Context, eventId string) error
 	DeleteEvent(ctx context.Context, eventId string) error
@@ -37,12 +38,15 @@ type UserSessionsRepository interface {
 }
 
 type Repository struct {
-	User         userRepository
+	User         UserRepository
 	Event        EventRepository
 	UserSessions UserSessionsRepository
 }
 
-func NewRepository(user userRepository, event EventRepository, userSessions UserSessionsRepository) *Repository {
+func NewRepository(db *database.DB) *Repository {
+	user := NewUserRepository(db)
+	event := NewEventRepository(db)
+	userSessions := NewUserSessionsRepository(db)
 	return &Repository{
 		User:         user,
 		Event:        event,
