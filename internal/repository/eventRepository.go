@@ -16,7 +16,7 @@ func NewEventRepository(db *database.DB) *eventRepository {
 	return &eventRepository{db}
 }
 
-func (vr eventRepository) CreateEvent(ctx context.Context, userId string, event *models.Event) error {
+func (vr eventRepository) CreateEvent(ctx context.Context, userId string, event *models.Event) (*models.Event, error) {
 	event.EventId = uuid.New().String()
 	event.UserId = userId
 	event.Completed = false
@@ -29,10 +29,10 @@ func (vr eventRepository) CreateEvent(ctx context.Context, userId string, event 
 
 	_, err := vr.db.NamedExecContext(ctx, query, event)
 	if err != nil {
-		return fmt.Errorf("error when creating a event when accessing the database: %w", err)
+		return nil, fmt.Errorf("error when creating a event when accessing the database: %w", err)
 	}
 
-	return nil
+	return event, nil
 }
 
 func (vr eventRepository) GetEventById(ctx context.Context, eventId string) (*models.Event, error) {
@@ -46,10 +46,10 @@ func (vr eventRepository) GetEventById(ctx context.Context, eventId string) (*mo
 	return &event, nil
 }
 
-func (vr eventRepository) GetEventsByUserIdAndDate(ctx context.Context, userId, date string) ([]*models.Event, error) {
+func (vr eventRepository) GetEventsByUserIdAndDate(ctx context.Context, userId, date string) ([]models.Event, error) {
 	query := `SELECT * FROM events WHERE user_id = $1 AND date_event = $2`
 
-	var events []*models.Event
+	var events []models.Event
 	err := vr.db.SelectContext(ctx, &events, query, userId, date)
 	if err != nil {
 		return nil, fmt.Errorf("error when getting the events by user id: %w", err)

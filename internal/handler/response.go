@@ -1,6 +1,11 @@
 package handler
 
-import "time"
+import (
+	"dailyPlanner/internal/models"
+	"time"
+)
+
+// Auth Response
 
 type UserResponse struct {
 	UserID   string `json:"user_id"`
@@ -21,4 +26,19 @@ type AuthResponse struct {
 	RefreshToken string          `json:"refresh_token"`
 	User         UserResponse    `json:"user"`
 	Session      SessionResponse `json:"session"`
+}
+
+// Event response
+
+type EventResponse struct {
+	EventID   string `json:"event_id"`
+	UserID    string `json:"user_id"`
+	Title     string `json:"title"`
+	Date      string `json:"date"`
+	Completed bool   `json:"completed"`
+	Color     string `json:"color"`
+}
+
+type EventsResponse struct {
+	Events []models.Event `json:"events"`
 }

@@ -29,6 +29,20 @@ type UpdateUserPasswordRequest struct {
 	NewPassword string `json:"new_password"`
 }
 
-type AppointmentModeratorRequest struct {
-	UserID string `json:"user_id"`
+// Event request
+
+type CreateEventRequest struct {
+	Title     string `json:"title"`
+	DateEvent string `json:"date_event"`
+	Color     string `json:"color"`
+}
+
+type GetEventsRequestForDate struct {
+	DateEvent string `json:"date_event"`
+}
+
+type UpdateEventRequest struct {
+	EventId string `json:"event_id"`
+	Title   string `json:"title"`
+	Color   string `json:"color"`
 }
