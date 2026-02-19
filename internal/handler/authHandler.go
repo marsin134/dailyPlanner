@@ -293,13 +293,14 @@ func (h *Handler) LogoutAllExceptHandler(w http.ResponseWriter, r *http.Request)
 		WriteErrorResponse(w, "Authorization is required", http.StatusBadRequest)
 		return
 	}
-	userId, ok := r.Context().Value("userId").(string)
-	if !ok {
-		WriteErrorResponse(w, "Authorization is required", http.StatusBadRequest)
+
+	session, err := h.Repo.UserSessions.GetSessionById(r.Context(), sessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err := h.Repo.UserSessions.DeactivateAllExcept(r.Context(), userId, sessionId)
+	err = h.Repo.UserSessions.DeactivateAllExcept(r.Context(), session.UserId, sessionId)
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return

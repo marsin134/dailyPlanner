@@ -130,8 +130,8 @@ func (r userRepository) UpdatePassword(ctx context.Context, email, password, new
 	return nil
 }
 
-func (r userRepository) AppointmentModerator(ctx context.Context, email, role string) error {
-	user, err := r.GetUserByEmail(ctx, email)
+func (r userRepository) AppointmentModerator(ctx context.Context, userId, role string) error {
+	user, err := r.GetUserById(ctx, userId)
 	if err != nil {
 		return fmt.Errorf("error receiving the user when appointment moderator: %w", err)
 	}

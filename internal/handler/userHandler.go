@@ -7,19 +7,25 @@ import (
 	"strings"
 )
 
-func (h *Handler) GetUserIDHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetByUserIDHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		WriteErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	userId, ok := r.Context().Value("userId").(string)
+	sessionId, ok := r.Context().Value("sessionId").(string)
 	if !ok {
-		WriteErrorResponse(w, "Authorization is required", http.StatusBadRequest)
+		WriteErrorResponse(w, "Session Id not found in request context", http.StatusUnauthorized)
 		return
 	}
 
-	user, err := h.Repo.User.GetUserById(r.Context(), userId)
+	session, err := h.Repo.UserSessions.GetSessionById(r.Context(), sessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repo.User.GetUserById(r.Context(), session.UserId)
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
@@ -71,12 +77,25 @@ func (h *Handler) UpdateUserNameHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	userEmail, ok := r.Context().Value("email").(string)
+	sessionId, ok := r.Context().Value("sessionId").(string)
 	if !ok {
-		WriteErrorResponse(w, "Authorization is required", http.StatusBadRequest)
+		WriteErrorResponse(w, "Session Id not found in request context", http.StatusUnauthorized)
+		return
 	}
 
-	err := h.Repo.User.UpdateUsername(r.Context(), userEmail, req.NewUserName)
+	session, err := h.Repo.UserSessions.GetSessionById(r.Context(), sessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repo.User.GetUserById(r.Context(), session.UserId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.Repo.User.UpdateUsername(r.Context(), user.Email, req.NewUserName)
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
@@ -108,13 +127,19 @@ func (h *Handler) UpdateUserPasswordHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userId, ok := r.Context().Value("userId").(string)
+	sessionId, ok := r.Context().Value("sessionId").(string)
 	if !ok {
-		WriteErrorResponse(w, "Authorization is required", http.StatusBadRequest)
+		WriteErrorResponse(w, "Session Id not found in request context", http.StatusUnauthorized)
 		return
 	}
 
-	user, err := h.Repo.User.GetUserById(r.Context(), userId)
+	session, err := h.Repo.UserSessions.GetSessionById(r.Context(), sessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repo.User.GetUserById(r.Context(), session.UserId)
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
@@ -145,23 +170,22 @@ func (h *Handler) AppointmentModeratorHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	var req AppointmentModeratorRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		WriteErrorResponse(w, "Invalid request format", http.StatusBadRequest)
-		return
-	}
-	if err := h.Validate.Struct(req); err != nil {
-		WriteErrorResponse(w, "Incorrect data", http.StatusBadRequest)
-		return
-	}
+	pathParts := strings.Split(r.URL.Path, "/")
+	userId := pathParts[len(pathParts)-1]
 
-	userId, ok := r.Context().Value("userId").(string)
+	sessionId, ok := r.Context().Value("sessionId").(string)
 	if !ok {
-		WriteErrorResponse(w, "Authorization is required", http.StatusBadRequest)
+		WriteErrorResponse(w, "Session Id not found in request context", http.StatusUnauthorized)
 		return
 	}
 
-	user, err := h.Repo.User.GetUserById(r.Context(), userId)
+	session, err := h.Repo.UserSessions.GetSessionById(r.Context(), sessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repo.User.GetUserById(r.Context(), session.UserId)
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
@@ -172,7 +196,7 @@ func (h *Handler) AppointmentModeratorHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = h.Repo.User.AppointmentModerator(r.Context(), user.Email, "Admin")
+	err = h.Repo.User.AppointmentModerator(r.Context(), userId, "Admin")
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusBadRequest)
 	}
@@ -191,13 +215,19 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, ok := r.Context().Value("userId").(string)
+	sessionId, ok := r.Context().Value("sessionId").(string)
 	if !ok {
-		WriteErrorResponse(w, "Authorization is required", http.StatusBadRequest)
+		WriteErrorResponse(w, "Session Id not found in request context", http.StatusUnauthorized)
 		return
 	}
 
-	err := h.Repo.User.DeleteUser(r.Context(), userId)
+	session, err := h.Repo.UserSessions.GetSessionById(r.Context(), sessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	err = h.Repo.User.DeleteUser(r.Context(), session.UserId)
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
