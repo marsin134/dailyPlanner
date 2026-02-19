@@ -7,6 +7,41 @@ import (
 	"strings"
 )
 
+func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		WriteErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	sessionId, ok := r.Context().Value("sessionId").(string)
+	if !ok {
+		WriteErrorResponse(w, "Session Id not found in request context", http.StatusUnauthorized)
+		return
+	}
+
+	session, err := h.Repo.UserSessions.GetSessionById(r.Context(), sessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repo.User.GetUserById(r.Context(), session.UserId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	response := UserResponse{
+		UserID:   user.UserId,
+		UserName: user.UserName,
+		Email:    user.Email,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
 func (h *Handler) GetByUserIDHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		WriteErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
