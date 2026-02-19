@@ -10,13 +10,13 @@ import (
 )
 
 type Handler struct {
-	Service  service.Service
-	Repo     repository.Repository
+	Service  *service.Service
+	Repo     *repository.Repository
 	Cfg      *config.Config
 	Validate *validator.Validate
 }
 
-func NewHandler(service service.Service, repo repository.Repository, cfg *config.Config) *Handler {
+func NewHandler(service *service.Service, repo *repository.Repository, cfg *config.Config) *Handler {
 	return &Handler{
 		Service:  service,
 		Repo:     repo,

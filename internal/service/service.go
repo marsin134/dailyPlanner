@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"dailyPlanner/internal/config"
 	"dailyPlanner/internal/models"
+	"dailyPlanner/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
 	"time"
 )
@@ -21,4 +23,9 @@ type authServiceInterface interface {
 
 type Service struct {
 	AuthService authServiceInterface
+}
+
+func NewService(userRepo repository.UserRepository, sessionsRepo repository.UserSessionsRepository, cfg *config.Config) *Service {
+	authSVC := NewAuthService(userRepo, sessionsRepo, cfg)
+	return &Service{AuthService: authSVC}
 }

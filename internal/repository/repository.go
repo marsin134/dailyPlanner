@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"dailyPlanner/internal/database"
 	"dailyPlanner/internal/models"
 	"time"
 )
@@ -37,12 +38,15 @@ type UserSessionsRepository interface {
 }
 
 type Repository struct {
-	User         userRepository
+	User         UserRepository
 	Event        EventRepository
 	UserSessions UserSessionsRepository
 }
 
-func NewRepository(user userRepository, event EventRepository, userSessions UserSessionsRepository) *Repository {
+func NewRepository(db *database.DB) *Repository {
+	user := NewUserRepository(db)
+	event := NewEventRepository(db)
+	userSessions := NewUserSessionsRepository(db)
 	return &Repository{
 		User:         user,
 		Event:        event,
