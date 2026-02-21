@@ -96,13 +96,11 @@ func (vr eventRepository) CompleteEvent(ctx context.Context, eventId string) err
 			SET completed = :completed 
 			WHERE event_id = :event_id`
 
-	result, err := vr.db.NamedExecContext(ctx, query, event)
+	_, err = vr.db.NamedExecContext(ctx, query, event)
 	if err != nil {
 		return fmt.Errorf("error when updating the event for completed: %w", err)
 	}
-	if !CheckUpdate(result) {
-		return fmt.Errorf("error when updating the event for completed: %w", err)
-	}
+
 	return nil
 }
 

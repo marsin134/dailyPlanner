@@ -149,14 +149,11 @@ func (r userRepository) AppointmentModerator(ctx context.Context, userId, role s
 			 SET role = :role
              WHERE user_id = :user_id`
 
-	result, err := r.db.NamedExecContext(ctx, query, user)
+	_, err = r.db.NamedExecContext(ctx, query, user)
 	if err != nil {
 		return fmt.Errorf("error when updating the role: %w", err)
 	}
 
-	if !CheckUpdate(result) {
-		return fmt.Errorf("error when updating the role: no rows were affected")
-	}
 	return nil
 }
 
