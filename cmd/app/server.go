@@ -11,7 +11,7 @@ import (
 )
 
 func InitializationHandlers(repo *repository.Repository, svc *service.Service, cfg *config.Config) http.Handler {
-	handlers := handler.Handler{Service: svc, Repo: repo, Cfg: cfg}
+	handlers := handler.NewHandler(svc, repo, cfg)
 
 	mux := http.NewServeMux()
 
