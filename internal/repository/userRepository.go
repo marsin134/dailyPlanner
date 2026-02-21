@@ -27,6 +27,7 @@ func (r userRepository) CreateUser(ctx context.Context, user *models.User, passw
 
 	user.UserId = uuid.New().String()
 	user.PasswordHash = string(passwordHash)
+	user.Role = "User"
 
 	query := `
 		INSERT INTO users (user_id, user_name, email, password_hash, role)
