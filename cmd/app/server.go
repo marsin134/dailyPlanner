@@ -26,7 +26,7 @@ func InitializationHandlers(repo *repository.Repository, svc *service.Service, c
 	mux.HandleFunc("/api/me", handlers.GetMe)
 	mux.HandleFunc("/api/me/update-name", handlers.UpdateUserNameHandler)
 	mux.HandleFunc("/api/me/update-password", handlers.UpdateUserPasswordHandler)
-	mux.HandleFunc("/api/me/delete/", handlers.DeleteEventByIDHandler)
+	mux.HandleFunc("/api/me/delete", handlers.DeleteUser)
 
 	mux.HandleFunc("/api/user/", handlers.GetByUserIDHandler)
 	mux.HandleFunc("/api/user/appointment-moderator/", handlers.AppointmentModeratorHandler)

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"strings"
 )
@@ -178,11 +177,6 @@ func (h *Handler) UpdateUserPasswordHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.OldPassword))
-	if err != nil {
-		WriteErrorResponse(w, "Passwords don't match", http.StatusBadRequest)
 	}
 
 	err = h.Repo.User.UpdatePassword(r.Context(), user.Email, req.OldPassword, req.NewPassword)
