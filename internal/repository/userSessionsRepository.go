@@ -95,41 +95,32 @@ func (s userSessionsRepository) UpdateSessionsToken(ctx context.Context, session
 func (s userSessionsRepository) Deactivate(ctx context.Context, sessionId string) error {
 	query := `UPDATE user_sessions SET is_active = false WHERE session_id = $1`
 
-	result, err := s.db.ExecContext(ctx, query, sessionId)
+	_, err := s.db.ExecContext(ctx, query, sessionId)
 	if err != nil {
 		return fmt.Errorf("deactivate: Error updating sessions: %w", err)
 	}
 
-	if !(CheckUpdate(result)) {
-		return fmt.Errorf("deactivate: Error updating sessions")
-	}
 	return nil
 }
 
 func (s userSessionsRepository) DeactivateAllExcept(ctx context.Context, userID, currentSessionId string) error {
 	query := `UPDATE user_sessions SET is_active = false WHERE user_id = $1 AND session_id != $2`
 
-	result, err := s.db.ExecContext(ctx, query, userID, currentSessionId)
+	_, err := s.db.ExecContext(ctx, query, userID, currentSessionId)
 	if err != nil {
 		return fmt.Errorf("deactivate: Error updating sessions: %w", err)
 	}
 
-	if !(CheckUpdate(result)) {
-		return fmt.Errorf("deactivate: Error updating sessions")
-	}
 	return nil
 }
 
 func (s userSessionsRepository) DeleteExpired(ctx context.Context) error {
 	query := `DELETE FROM user_sessions WHERE is_active = false`
 
-	result, err := s.db.ExecContext(ctx, query)
+	_, err := s.db.ExecContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("DeleteExpired: Error deleting expired sessions: %w", err)
 	}
 
-	if !(CheckUpdate(result)) {
-		return fmt.Errorf("DeleteExpired: Error deleting expired sessions")
-	}
 	return nil
 }

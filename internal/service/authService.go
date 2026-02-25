@@ -124,8 +124,6 @@ func (svc *authService) Login(ctx context.Context, req LoginUserRequest, userAge
 		return nil, "", "", nil, fmt.Errorf("error when logging in: %w", err)
 	}
 
-	refreshToken := ""
-
 	// getting all user sessions
 	sessions, err := svc.sessionsRepo.GetSessionsByUser(ctx, user.UserId)
 	if err != nil {
@@ -145,16 +143,14 @@ func (svc *authService) Login(ctx context.Context, req LoginUserRequest, userAge
 	}
 
 	session := svc.CheckUserAgentAndIp(sessions, userAgent, ipAddress)
-	if session == nil {
-		refreshToken, session, err = svc.CreateUserSessionsService(ctx, user, ipAddress, userAgent)
-	} else {
-		// updating a refresh token
-		refreshToken, expiresAt, err := svc.generateRefreshToken()
+	if session != nil {
+		err = svc.sessionsRepo.Deactivate(ctx, session.SessionId)
 		if err != nil {
 			return nil, "", "", nil, fmt.Errorf("error when logging in: %w", err)
 		}
-		err = svc.sessionsRepo.UpdateSessionsToken(ctx, session.SessionId, refreshToken, expiresAt)
+		err = svc.sessionsRepo.DeleteExpired(ctx)
 	}
+	refreshToken, session, err := svc.CreateUserSessionsService(ctx, user, ipAddress, userAgent)
 
 	if err != nil {
 		return nil, "", "", nil, fmt.Errorf("error when logging in: %w", err)

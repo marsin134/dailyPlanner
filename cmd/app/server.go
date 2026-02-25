@@ -11,7 +11,7 @@ import (
 )
 
 func InitializationHandlers(repo *repository.Repository, svc *service.Service, cfg *config.Config) http.Handler {
-	handlers := handler.Handler{Service: svc, Repo: repo, Cfg: cfg}
+	handlers := handler.NewHandler(svc, repo, cfg)
 
 	mux := http.NewServeMux()
 
@@ -26,7 +26,7 @@ func InitializationHandlers(repo *repository.Repository, svc *service.Service, c
 	mux.HandleFunc("/api/me", handlers.GetMe)
 	mux.HandleFunc("/api/me/update-name", handlers.UpdateUserNameHandler)
 	mux.HandleFunc("/api/me/update-password", handlers.UpdateUserPasswordHandler)
-	mux.HandleFunc("/api/me/delete/", handlers.DeleteEventByIDHandler)
+	mux.HandleFunc("/api/me/delete", handlers.DeleteUser)
 
 	mux.HandleFunc("/api/user/", handlers.GetByUserIDHandler)
 	mux.HandleFunc("/api/user/appointment-moderator/", handlers.AppointmentModeratorHandler)
@@ -36,7 +36,7 @@ func InitializationHandlers(repo *repository.Repository, svc *service.Service, c
 	mux.HandleFunc("/api/event/get", handlers.GetEventByUserAndDate)
 	mux.HandleFunc("/api/event/complete/", handlers.CompleteEvent)
 	mux.HandleFunc("/api/event/update", handlers.UpdateEventHandler)
-	mux.HandleFunc("api/event/delete/", handlers.DeleteEventByIDHandler)
+	mux.HandleFunc("/api/event/delete/", handlers.DeleteEventByIDHandler)
 
 	handlerChain := middleware.Chain(
 		mux,
@@ -69,5 +69,5 @@ func HomeHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "/api/event/get, handlers.GetEventByUserAndDate\n")
 	fmt.Fprintf(w, "/api/event/complete/, handlers.CompleteEvent\n")
 	fmt.Fprintf(w, "/api/event/update, handlers.UpdateEventHandler\n")
-	fmt.Fprintf(w, "api/event/delete/, handlers.DeleteEventByIDHandler\n")
+	fmt.Fprintf(w, "/api/event/delete/, handlers.DeleteEventByIDHandler\n")
 }

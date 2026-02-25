@@ -32,7 +32,7 @@ type UpdateUserPasswordRequest struct {
 // Event request
 
 type CreateEventRequest struct {
-	Title     string `json:"title"`
+	Title     string `json:"title_event"`
 	DateEvent string `json:"date_event"`
 	Color     string `json:"color"`
 }
@@ -43,6 +43,6 @@ type GetEventsRequestForDate struct {
 
 type UpdateEventRequest struct {
 	EventId string `json:"event_id"`
-	Title   string `json:"title"`
+	Title   string `json:"title_event"`
 	Color   string `json:"color"`
 }

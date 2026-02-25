@@ -274,6 +274,12 @@ func (h *Handler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = h.Repo.UserSessions.DeleteExpired(r.Context())
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(MessageResponse{Message: "Successful exit from the device"})
 }
@@ -301,6 +307,12 @@ func (h *Handler) LogoutAllExceptHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	err = h.Repo.UserSessions.DeactivateAllExcept(r.Context(), session.UserId, sessionId)
+	if err != nil {
+		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = h.Repo.UserSessions.DeleteExpired(r.Context())
 	if err != nil {
 		WriteErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
