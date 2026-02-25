@@ -8,7 +8,7 @@ import (
 )
 
 func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
+	if r.Method != http.MethodPost {
 		WriteErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}

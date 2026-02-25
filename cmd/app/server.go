@@ -36,7 +36,7 @@ func InitializationHandlers(repo *repository.Repository, svc *service.Service, c
 	mux.HandleFunc("/api/event/get", handlers.GetEventByUserAndDate)
 	mux.HandleFunc("/api/event/complete/", handlers.CompleteEvent)
 	mux.HandleFunc("/api/event/update", handlers.UpdateEventHandler)
-	mux.HandleFunc("api/event/delete/", handlers.DeleteEventByIDHandler)
+	mux.HandleFunc("/api/event/delete/", handlers.DeleteEventByIDHandler)
 
 	handlerChain := middleware.Chain(
 		mux,
@@ -69,5 +69,5 @@ func HomeHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "/api/event/get, handlers.GetEventByUserAndDate\n")
 	fmt.Fprintf(w, "/api/event/complete/, handlers.CompleteEvent\n")
 	fmt.Fprintf(w, "/api/event/update, handlers.UpdateEventHandler\n")
-	fmt.Fprintf(w, "api/event/delete/, handlers.DeleteEventByIDHandler\n")
+	fmt.Fprintf(w, "/api/event/delete/, handlers.DeleteEventByIDHandler\n")
 }
